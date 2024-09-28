@@ -1,15 +1,36 @@
-import React from 'react';
-import { MapContainer, TileLayer } from 'react-leaflet';
+import React, { useEffect, useRef } from 'react';
+import L from 'leaflet';
 
-function MapComponent() {
-  return (
-    <MapContainer center={[51.505, -0.09]} zoom={13} style={{ height: '500px', width: '100%' }}>
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-      />
-    </MapContainer>
-  );
-}
+const Map = ({ onSourceSelect, onDestinationSelect }) => {
+  const mapRef = useRef(null);
 
-export default MapComponent;
+  useEffect(() => {
+    const map = L.map(mapRef.current).setView([51.505, -0.09], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+    }).addTo(map);
+
+    map.on('click', (e) => {
+      const location = {
+        lat: e.latlng.lat,
+        lng: e.latlng.lng,
+        name: `Lat: ${e.latlng.lat.toFixed(5)}, Lng: ${e.latlng.lng.toFixed(5)}`,
+      };
+
+      if (!onSourceSelect.locationSelected) {
+        onSourceSelect(location);
+      } else {
+        onDestinationSelect(location);
+      }
+    });
+
+    return () => {
+      map.off();
+    };
+  }, [onSourceSelect, onDestinationSelect]);
+
+  return <div ref={mapRef} style={{ height: '100%', width: '100%' }} />;
+};
+
+export default Map;
